@@ -1,8 +1,12 @@
 import { sample } from '@std/random'
 import { assert } from '@std/assert/assert'
 import { EnglishStemmer } from '../snowball/js_out/english-stemmer.js'
-import type { EnglishStemmer as Stemmer } from '../snowball/js_out/english-stemmer.js'
 import { StatelessRegExp } from './utils.ts'
+
+type Stemmer = {
+	/** Stems a single word and returns the stemmed form. */
+	stemWord(word: string): string
+}
 
 const RIGHT_TO_LEFT_OVERRIDE = '\u202E'
 const POP_DIRECTIONAL_FORMATTING = '\u202C'
@@ -32,40 +36,39 @@ const directionalOverriddenPartRe = new StatelessRegExp(
 	'u',
 )
 
-// TODO?
-// 𝖠𝖡𝖢𝖣𝖤𝖥𝖦𝖧𝖨𝖩𝖪𝖫𝖬𝖭𝖮𝖯𝖰𝖱𝖲𝖳𝖴𝖵𝖶𝖷𝖸𝖹
-// 𝖺𝖻𝖼𝖽𝖾𝖿𝗀𝗁𝗂𝗃𝗄𝗅𝗆𝗇𝗈𝗉𝗊𝗋𝗌𝗍𝗎𝗏𝗐𝗑𝗒𝗓
-
 // modified from https://gist.github.com/StevenACoffman/a5f6f682d94e38ed804182dc2693ed4b?permalink_comment_id=5406875#gistcomment-5406875
 // and https://en.wiktionary.org/wiki/Appendix:Variations_of_%22a%22 etc.
+// supplemented with chars from
+// 𝖠𝖡𝖢𝖣𝖤𝖥𝖦𝖧𝖨𝖩𝖪𝖫𝖬𝖭𝖮𝖯𝖰𝖱𝖲𝖳𝖴𝖵𝖶𝖷𝖸𝖹 𝖺𝖻𝖼𝖽𝖾𝖿𝗀𝗁𝗂𝗃𝗄𝗅𝗆𝗇𝗈𝗉𝗊𝗋𝗌𝗍𝗎𝗏𝗐𝗑𝗒𝗓
+// when others unavailable
 const homoglyphs = [
 	'aа',
 	'AΑА',
-	'b',
+	'bߕ',
 	'BВΒ',
 	'cсϲ',
 	'CС',
 	'dԁ',
 	'DᎠꓓ',
-	'e',
+	'eе',
 	'EᎬꓰ',
-	'f',
+	'f𝖿',
 	'Fᖴꓝ𝈓',
-	'g',
+	'g𝗀',
 	'GꓖᏀ',
-	'h',
-	'H',
+	'h𝗁',
+	'HНΗ',
 	'iі',
 	'IІ',
-	'j',
-	'J',
-	'k',
+	'j𝗃',
+	'J𝖩',
+	'k𝗄',
 	'KΚ',
-	'l',
+	'l𝗅',
 	'LԼ',
-	'm',
-	'M',
-	'n',
+	'm𝗆',
+	'MМΜ',
+	'n𝗇',
 	'NΝ',
 	'oоο',
 	'OОΟ',
@@ -73,16 +76,16 @@ const homoglyphs = [
 	'PРΡⲢ',
 	'qԛ',
 	'QԚ',
-	'r',
+	'r𝗋',
 	'Rꓣ𖼵',
 	'sѕ',
 	'SЅ',
-	't',
+	't𝗍',
 	'TТΤ',
-	'u',
-	'U',
-	'v',
-	'V',
+	'uս',
+	'U∪Ս',
+	'vν∨',
+	'V⋁',
 	'wԝ',
 	'WԜ',
 	'xх',
@@ -158,10 +161,16 @@ class CharConverter {
 	}
 }
 
+type Part = {
+	kind: 'plain' | 'obfuscated'
+	content: string
+}
+
 export class Obfuscator {
 	#segmenter: Intl.Segmenter
 	#prng: () => number
 	#stemmer: Stemmer
+	#locale: Intl.Locale
 
 	#targetWordRe: StatelessRegExp
 	#converter: CharConverter
@@ -169,35 +178,48 @@ export class Obfuscator {
 
 	constructor(options?: Partial<ObfuscatorOptions>) {
 		const opts = { ...defaultOptions, ...options }
-		this.#segmenter = new Intl.Segmenter(opts.locale, { granularity: 'word' })
+		this.#locale = new Intl.Locale(opts.locale)
+		this.#segmenter = new Intl.Segmenter(this.#locale, { granularity: 'word' })
 		this.#prng = opts.prng
 		this.#stemmer = opts.stemmer
 
+		const wordStemRegexParts = opts.words.map((w) => RegExp.escape(this.#normalize(w)))
+
 		this.#targetWordRe = new StatelessRegExp(
-			String.raw`^(?:${opts.words.sort((a, b) => b.length - a.length).join('|')})$`,
-			'iu',
+			String.raw`^(?:${wordStemRegexParts.sort((a, b) => b.length - a.length).join('|')})$`,
+			'u',
 		)
 
-		const scriptRe = createScriptRe(opts.locale)
+		const scriptRe = createScriptRe(this.#locale)
 		this.#converter = new CharConverter(homoglyphs, (c) => scriptRe.test(c), opts.prng)
 		this.#reverter = new CharConverter(homoglyphs, (c) => !scriptRe.test(c), opts.prng)
 	}
 
-	obfuscate(text: string): string {
-		let out = ''
+	#normalize(word: string): string {
+		return this.#stemmer.stemWord(word).normalize('NFD').toLocaleLowerCase(this.#locale)
+	}
+
+	obfuscateToParts(text: string): Part[] {
+		const parts: Part[] = []
 		for (const s of this.#segmenter.segment(text)) {
-			if (s.isWordLike && this.#targetWordRe.test(s.segment)) {
-				out += this.obfuscateWord(s.segment.normalize('NFD'))
+			const stem = this.#normalize(s.segment)
+
+			if (s.isWordLike && this.#targetWordRe.test(stem)) {
+				parts.push({ kind: 'obfuscated', content: this.obfuscateWord(s.segment) })
 			} else {
-				out += s.segment
+				parts.push({ kind: 'plain', content: s.segment })
 			}
 		}
 
-		return out
+		return parts
+	}
+
+	obfuscate(text: string): string {
+		return this.obfuscateToParts(text).map((p) => p.content).join('')
 	}
 
 	protected obfuscateWord(word: string): string {
-		const chars = [...this.#converter.convert(word)]
+		const chars = [...this.#converter.convert(word.normalize('NFD'))]
 
 		if (chars.length > 3) {
 			chars.reverse()
@@ -227,5 +249,6 @@ export class Obfuscator {
 				return [...m.slice(1, -1)].reverse().join('')
 			})
 			.replaceAll(allInvisiblesRe.asStateful('g'), '')
+			.normalize('NFC')
 	}
 }
