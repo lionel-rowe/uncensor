@@ -3,10 +3,11 @@
 	"exports": {},
 	"tasks": {
 		"test": "deno test -R",
-		"start": "deno run -R ./src/cli.ts",
+		"start": "deno run -R --allow-run ./src/cli.ts",
 		"build": "deno run -R ./scripts/build.ts"
 	},
 	"imports": {
+		"@cliffy/command": "jsr:@cliffy/command@1.0.0-rc.7",
 		"@cliffy/prompt": "jsr:@cliffy/prompt@1.0.0-rc.8",
 		"@dmsnell/diff-match-patch": "npm:@dmsnell/diff-match-patch@^1.1.0",
 		"@std/assert": "jsr:@std/assert@^1.0.18",

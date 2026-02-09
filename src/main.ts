@@ -163,6 +163,8 @@ class CharConverter {
 
 type Part = {
 	kind: 'plain' | 'obfuscated'
+	start: number
+	end: number
 	content: string
 }
 
@@ -203,11 +205,12 @@ export class Obfuscator {
 		const parts: Part[] = []
 		for (const s of this.#segmenter.segment(text)) {
 			const stem = this.#normalize(s.segment)
+			const part = { start: s.index, end: s.index + s.segment.length, content: s.segment }
 
 			if (s.isWordLike && this.#targetWordRe.test(stem)) {
-				parts.push({ kind: 'obfuscated', content: this.obfuscateWord(s.segment) })
+				parts.push({ kind: 'obfuscated', ...part, content: this.obfuscateWord(s.segment) })
 			} else {
-				parts.push({ kind: 'plain', content: s.segment })
+				parts.push({ kind: 'plain', ...part })
 			}
 		}
 
