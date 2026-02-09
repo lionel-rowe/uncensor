@@ -76,9 +76,9 @@ Deno.test(Obfuscator.name, async (t) => {
 
 	await t.step('word conversion', async (t) => {
 		const tests = [
-			['One', 'Ο\u2060n\u200de'],
+			['One', 'Ο\u2060𝗇\u180eе'],
 			['Two', 'Τ\u2060ԝ\u180eο'],
-			['Three', 'Τ\u202ee\u2060r\u200dh\u202ce'],
+			['Three', 'Τ\u202eе\u2060𝗋\u200d𝗁\u202cе'],
 		] as const
 
 		await t.step(Obfuscator.prototype['obfuscateWord'].name, async (t) => {
@@ -96,7 +96,7 @@ Deno.test(Obfuscator.name, async (t) => {
 		const tests = [
 			[
 				'Epstein didn’t kill himself.',
-				'ꓰ\u202eі\u180ee\u2060t\u200dѕ\u180eⲣ\u202cn didn’t k\u202el\u200cі\u202cl himself.',
+				'ꓰ\u202eі\u180eе\u200c𝗍\u200cѕ\u200cⲣ\u202c𝗇 didn’t 𝗄\u202e𝗅\u200cі\u202c𝗅 himself.',
 			],
 			[
 				'EPSTEIN DIDN’T KILL HIMSELF.',
