@@ -96,7 +96,7 @@ const homoglyphs = [
 	'ZⲌΖ',
 ]
 
-const words = (await Deno.readTextFile('./data/words.txt'))
+const words = (await Deno.readTextFile(new URL(import.meta.resolve('../data/words.txt'))))
 	.split('\n')
 	.map((x) => {
 		const trimmed = x.trim()

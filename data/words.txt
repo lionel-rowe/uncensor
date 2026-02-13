@@ -1,0 +1,4 @@
+# This file contains a list of words to decensor, one per line.
+# This is currently just a sample, you can add whatever words you like.
+Epstein
+kill

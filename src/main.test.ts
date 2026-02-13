@@ -126,6 +126,12 @@ Deno.test(Obfuscator.name, async (t) => {
 	})
 
 	await t.step('stemming', async (t) => {
+		await t.step('with default options', () => {
+			const obfuscator = new WrappingObfuscator({ prng: prng() })
+			const output = obfuscator.obfuscate('Someone killed Epstein.')
+			assertEquals(output, 'Someone [killed] [Epstein].')
+		})
+
 		await t.step('with default English stemmer', () => {
 			const words = ['signify']
 			const obfuscator = new WrappingObfuscator({ prng: prng(), words })
