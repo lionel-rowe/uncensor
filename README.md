@@ -2,6 +2,10 @@
 
 Experimental tool to obfuscate suspected trigger words from algorithmic censorship on platforms such as Facebook and YouTube, while keeping them human-readable, and without resorting to baby-talk like "unalive", "PDF file", "cheese pizza", etc.
 
+## Prerequisites
+
+[Deno 2.x](https://deno.com/)
+
 ## Usage
 
 ### Interactive

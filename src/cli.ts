@@ -26,7 +26,7 @@ new Command()
 	.command('edit', 'Edit the list of censored words')
 	.action(async () => {
 		await new Deno.Command(
-			'code',
+			'edit',
 			{ args: [fromFileUrl(import.meta.resolve('../data/words.txt'))] },
 		).spawn().output()
 	})
