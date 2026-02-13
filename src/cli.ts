@@ -8,18 +8,22 @@ const obfuscator = new Obfuscator()
 
 new Command()
 	.name('decensor')
-	.description('Example command description')
-	.action(async () => {
-		while (true) {
-			const input = await Input.prompt('Text to decensor')
-			console.info(
-				obfuscator.obfuscateToParts(input)
-					.map((p) => p.kind === 'obfuscated' ? bold(bgMagenta(p.content)) : p.content)
-					.join(''),
-			)
+	.description(
+		'A tool to obfuscate suspected trigger words in text, making them less likely to be algorithmically censored, while remaining human-readable',
+	)
+	.arguments('[...args:string]')
+	.action(async (_opts, ...args) => {
+		if (args.length > 0) {
+			console.info(render(args.join(' ')))
+			return
 		}
+
+		do {
+			const input = await Input.prompt('Text to decensor')
+			console.info(render(input))
+		} while (Deno.stdin.isTerminal())
 	})
-	.command('edit', 'edit')
+	.command('edit', 'Edit the list of censored words')
 	.action(async () => {
 		await new Deno.Command(
 			'code',
@@ -27,3 +31,9 @@ new Command()
 		).spawn().output()
 	})
 	.parse(Deno.args)
+
+function render(input: string): string {
+	return obfuscator.obfuscateToParts(input)
+		.map((p) => p.kind === 'obfuscated' ? bold(bgMagenta(p.content)) : p.content)
+		.join('')
+}
