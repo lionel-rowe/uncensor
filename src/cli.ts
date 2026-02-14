@@ -7,7 +7,7 @@ import { fromFileUrl } from '@std/path'
 const obfuscator = new Obfuscator()
 
 new Command()
-	.name('decensor')
+	.name('uncensor')
 	.description(
 		'A tool to obfuscate suspected trigger words in text, making them less likely to be algorithmically censored, while remaining human-readable',
 	)
@@ -19,7 +19,7 @@ new Command()
 		}
 
 		do {
-			const input = await Input.prompt('Text to decensor')
+			const input = await Input.prompt('Text to uncensor')
 			console.info(render(input))
 		} while (Deno.stdin.isTerminal())
 	})
