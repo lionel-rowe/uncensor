@@ -96,11 +96,11 @@ Deno.test(Obfuscator.name, async (t) => {
 		const tests = [
 			[
 				'Epstein didn’t kill himself.',
-				'ꓰ\u202eі\u180eе\u200c𝗍\u200cѕ\u200cⲣ\u202c𝗇 didn’t 𝗄\u202e𝗅\u200cі\u202c𝗅 himself.',
+				'ꓰ\u202eі\u180eе\u200d𝗍\u180eѕ\u180eⲣ\u202c𝗇 didn’t 𝗄\u202e𝗅\u200dі\u202c𝗅 himself.',
 			],
 			[
 				'EPSTEIN DIDN’T KILL HIMSELF.',
-				'ꓰ\u202eІ\u180eᎬ\u200cΤ\u200cЅ\u200cⲢ\u202cΝ DIDN’T Κ\u202eԼ\u200cІ\u202cԼ HIMSELF.',
+				'ꓰ\u202eІ\u180eᎬ\u200dΤ\u180eЅ\u180eⲢ\u202cΝ DIDN’T Κ\u202eԼ\u200dІ\u202cԼ HIMSELF.',
 			],
 		] as const
 

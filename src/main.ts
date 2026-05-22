@@ -17,13 +17,14 @@ const directionalOverrides = [
 ] as const
 
 const MONGOLIAN_VOWEL_SEPARATOR = '\u180e'
-const ZERO_WIDTH_NON_JOINER = '\u200c'
+// // causes rendering issues in some fonts
+// const ZERO_WIDTH_NON_JOINER = '\u200c'
 const ZERO_WIDTH_JOINER = '\u200d'
 const WORD_JOINER = '\u2060'
 
 const invisibles = [
 	MONGOLIAN_VOWEL_SEPARATOR,
-	ZERO_WIDTH_NON_JOINER,
+	// ZERO_WIDTH_NON_JOINER,
 	ZERO_WIDTH_JOINER,
 	WORD_JOINER,
 ] as const
