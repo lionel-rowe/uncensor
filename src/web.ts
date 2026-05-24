@@ -83,14 +83,20 @@ function getTargetRanges(obfuscator: Obfuscator, plainText: string): {
 function updateHighlights(obfuscator: Obfuscator) {
 	if (!supportsCustomHighlight()) return
 
-	const plainText = getEditorText($plainEditor)
-	const { plainRanges, obfuscatedRanges } = getTargetRanges(obfuscator, plainText)
-	applyHighlight(PLAIN_HIGHLIGHT_NAME, $plainEditor, plainRanges)
-	applyHighlight(OBFUSCATED_HIGHLIGHT_NAME, $obfuscatedEditor, obfuscatedRanges)
+	try {
+		const plainText = getEditorText($plainEditor)
+		const { plainRanges, obfuscatedRanges } = getTargetRanges(obfuscator, plainText)
+
+		applyHighlight(PLAIN_HIGHLIGHT_NAME, $plainEditor, plainRanges)
+		applyHighlight(OBFUSCATED_HIGHLIGHT_NAME, $obfuscatedEditor, obfuscatedRanges)
+	} catch (e) {
+		// swallow any error and log to console
+		console.error(e)
+	}
 }
 
 function supportsCustomHighlight(): boolean {
-	return typeof CSS.highlights === 'object' && typeof globalThis.Highlight === 'function'
+	return typeof globalThis.CSS?.highlights === 'object' && typeof globalThis.Highlight === 'function'
 }
 
 function getEditorText(editor: HTMLDivElement): string {
@@ -123,14 +129,21 @@ async function copyText(text: string): Promise<boolean> {
 	return copied
 }
 
-function applyHighlight(name: string, root: HTMLElement, ranges: OffsetRange[]) {
+function applyHighlight(name: string, $el: HTMLElement, ranges: OffsetRange[]) {
+	$el.normalize() // merge adjacent text nodes to simplify range calculations
+	if ($el.childNodes.length > 1) {
+		// clobber any unexpected element nodes (should be just a single text node)
+		// deno-lint-ignore no-self-assign
+		$el.textContent = $el.textContent
+	}
+
 	const registry = getHighlightRegistry()
 	if (!registry) return
 
 	registry.delete(name)
 	if (ranges.length === 0) return
 
-	const indexedNodes = indexTextNodes(root)
+	const indexedNodes = indexTextNodes($el)
 	if (indexedNodes.length === 0) return
 
 	const textLength = indexedNodes[indexedNodes.length - 1].end
