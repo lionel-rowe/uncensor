@@ -20,6 +20,7 @@ const OBFUSCATED_HIGHLIGHT_NAME = 'target-obfuscated'
 const $wordListInput = getElementById('words', HTMLTextAreaElement)
 const $plainEditor = getElementById('plain-input', HTMLDivElement)
 const $obfuscatedEditor = getElementById('obfuscated-input', HTMLDivElement)
+const $copyObfuscatedButton = getElementById('copy-obfuscated', HTMLButtonElement)
 
 $wordListInput.value = localStorage.getItem('uncensor:word-list') ?? localStorage.getItem('uncensor:words') ?? ''
 setEditorText(
@@ -40,6 +41,17 @@ $wordListInput.addEventListener('input', () => localStorage.setItem('uncensor:wo
 $plainEditor.addEventListener('input', () => localStorage.setItem('uncensor:plain-input', getEditorText($plainEditor)))
 $obfuscatedEditor.addEventListener('input', () => {
 	localStorage.setItem('uncensor:obfuscated-input', getEditorText($obfuscatedEditor))
+})
+
+$copyObfuscatedButton.addEventListener('click', async () => {
+	const text = getEditorText($obfuscatedEditor)
+	if (await copyText(text)) {
+		const originalLabel = $copyObfuscatedButton.textContent ?? 'Copy'
+		$copyObfuscatedButton.textContent = 'Copied!'
+		globalThis.setTimeout(() => {
+			$copyObfuscatedButton.textContent = originalLabel
+		}, 3000)
+	}
 })
 
 function createObfuscator() {
@@ -87,6 +99,28 @@ function getEditorText(editor: HTMLDivElement): string {
 
 function setEditorText(editor: HTMLDivElement, value: string) {
 	editor.textContent = value
+}
+
+async function copyText(text: string): Promise<boolean> {
+	if (globalThis.isSecureContext && navigator.clipboard?.writeText) {
+		try {
+			await navigator.clipboard.writeText(text)
+			return true
+		} catch {
+			// fallback below
+		}
+	}
+
+	const $temp = document.createElement('textarea')
+	$temp.value = text
+	$temp.setAttribute('readonly', 'true')
+	$temp.style.position = 'fixed'
+	$temp.style.opacity = '0'
+	document.body.append($temp)
+	$temp.select()
+	const copied = document.execCommand('copy')
+	$temp.remove()
+	return copied
 }
 
 function applyHighlight(name: string, root: HTMLElement, ranges: OffsetRange[]) {

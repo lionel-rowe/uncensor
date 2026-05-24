@@ -7,6 +7,7 @@
 	--accent: #0f766e;
 	--tab-active-bg: #ffffff;
 	--tab-hover-bg: #eef2f7;
+	--border-radius: 5px;
 }
 
 *, *::before, *::after {
@@ -40,7 +41,7 @@ body {
 	padding: 0.55rem 1.1rem;
 	border: 1px solid var(--border);
 	border-bottom: none;
-	border-radius: 8px 8px 0 0;
+	border-radius: var(--border-radius) var(--border-radius) 0 0;
 	background: var(--bg);
 	color: var(--muted);
 	text-decoration: none;
@@ -70,7 +71,7 @@ body {
 .card {
 	background: var(--card);
 	border: 1px solid var(--border);
-	border-radius: 0 8px 8px 8px;
+	border-radius: 0 var(--border-radius) var(--border-radius) var(--border-radius);
 	padding: 1.25rem;
 	box-shadow: 0 6px 18px rgba(10, 20, 40, 0.06);
 	position: relative;
@@ -107,14 +108,50 @@ label {
 	cursor: default;
 }
 
+.field-label-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-bottom: 0.35rem;
+}
+
+.field-label-row .field-label {
+	margin-bottom: 0;
+}
+
+.copy-btn {
+	padding: 0.2rem 0.6rem;
+	font-size: 0.8rem;
+	margin: -3px 0;
+	line-height: 1.2;
+	font-weight: 600;
+	color: var(--accent);
+	border-color: color-mix(in oklab, var(--accent), #000 15%);
+	background: linear-gradient(180deg, #ffffff 0%, #f3fbfa 100%);
+	box-shadow: 0 1px 2px rgba(15, 118, 110, 0.18);
+	transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.copy-btn:hover {
+	background: linear-gradient(180deg, #f6fffe 0%, #e8f8f6 100%);
+	box-shadow: 0 2px 5px rgba(15, 118, 110, 0.2);
+	transform: translateY(-1px);
+}
+
+.copy-btn:active {
+	transform: translateY(0);
+	box-shadow: 0 1px 2px rgba(15, 118, 110, 0.2);
+}
+
 textarea {
 	width: 100%;
 	min-height: 9rem;
 	padding: 0.6rem;
 	border: 1px solid var(--border);
-	border-radius: 8px;
+	border-radius: var(--border-radius);
 	font: inherit;
-	resize: vertical;
+	resize: none;
 	field-sizing: content;
 }
 
@@ -123,13 +160,12 @@ textarea {
 	min-height: 9rem;
 	padding: 0.6rem;
 	border: 1px solid var(--border);
-	border-radius: 8px;
+	border-radius: var(--border-radius);
 	font: inherit;
 	color: var(--text);
 	white-space: pre-wrap;
-	overflow-wrap: break-word;
+	overflow-wrap: anywhere;
 	overflow: auto;
-	resize: vertical;
 	field-sizing: content;
 	caret-color: var(--text);
 	background: #fff;
@@ -158,7 +194,7 @@ button {
 	background: #fff;
 	color: var(--text);
 	padding: 0.5rem 0.8rem;
-	border-radius: 8px;
+	border-radius: var(--border-radius);
 	cursor: pointer;
 	font: inherit;
 	transition: background 0.15s;

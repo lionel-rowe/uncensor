@@ -4,7 +4,8 @@
 	"tasks": {
 		"test": "deno test -R",
 		"start": "deno run -R --allow-run ./src/cli.ts",
-		"build": "deno run -R ./scripts/build.ts"
+		"build": "deno run -R ./scripts/build.ts",
+		"web": "deno run -A --watch scripts/buildWeb.ts"
 	},
 	"imports": {
 		"@cliffy/command": "jsr:@cliffy/command@1.0.0-rc.7",
