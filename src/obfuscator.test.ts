@@ -1,9 +1,12 @@
-import { allInvisiblesRe, Obfuscator } from './main.ts'
+import { allInvisiblesRe, Obfuscator } from './obfuscator.ts'
 import { bgGreen, bgRed } from '@std/fmt/colors'
 import { assertEquals, AssertionError } from '@std/assert'
 import { getRandomValuesSeeded, nextFloat64 } from '@std/random'
 import { type Diff, DIFF_DELETE, DIFF_EQUAL, DIFF_INSERT, diff_match_patch } from '@dmsnell/diff-match-patch'
 import { SpanishStemmer } from '../snowball/js_out/spanish-stemmer.js'
+import { parseWords } from './parseWords.ts'
+
+const words = parseWords(await Deno.readTextFile(new URL('../data/words.txt', import.meta.url)))
 
 // const SEED = crypto.getRandomValues(new BigUint64Array(1))[0]
 const SEED = 1930584040571145426n
@@ -67,7 +70,7 @@ Deno.test(Obfuscator.name, async (t) => {
 
 		for (const [input, expected] of tests) {
 			await t.step(JSON.stringify(input), () => {
-				const obfuscator = new WrappingObfuscator()
+				const obfuscator = new WrappingObfuscator(words)
 				const output = obfuscator.obfuscate(input)
 				assertObfuscatedEquals(output, expected)
 			})
@@ -84,7 +87,7 @@ Deno.test(Obfuscator.name, async (t) => {
 		await t.step(Obfuscator.prototype['obfuscateWord'].name, async (t) => {
 			for (const [word, expected] of tests) {
 				await t.step(JSON.stringify(word), () => {
-					const obfuscator = new Obfuscator({ prng: prng() })
+					const obfuscator = new Obfuscator(words, { prng: prng() })
 					const output = obfuscator['obfuscateWord'](word)
 					assertObfuscatedEquals(output, expected)
 				})
@@ -107,7 +110,7 @@ Deno.test(Obfuscator.name, async (t) => {
 		await t.step(Obfuscator.prototype.obfuscate.name, async (t) => {
 			for (const [input, expected] of tests) {
 				await t.step(JSON.stringify(input), () => {
-					const obfuscator = new Obfuscator({ prng: prng() })
+					const obfuscator = new Obfuscator(words, { prng: prng() })
 					const output = obfuscator.obfuscate(input)
 					assertObfuscatedEquals(output, expected)
 				})
@@ -117,7 +120,7 @@ Deno.test(Obfuscator.name, async (t) => {
 		await t.step(Obfuscator.prototype.deobfuscate.name, async (t) => {
 			for (const [expected, obfuscated] of tests) {
 				await t.step(JSON.stringify(obfuscated), () => {
-					const obfuscator = new Obfuscator({ prng: prng() })
+					const obfuscator = new Obfuscator(words, { prng: prng() })
 					const output = obfuscator.deobfuscate(obfuscated)
 					assertObfuscatedEquals(output, expected)
 				})
@@ -127,21 +130,21 @@ Deno.test(Obfuscator.name, async (t) => {
 
 	await t.step('stemming', async (t) => {
 		await t.step('with default options', () => {
-			const obfuscator = new WrappingObfuscator({ prng: prng() })
+			const obfuscator = new WrappingObfuscator(words, { prng: prng() })
 			const output = obfuscator.obfuscate('Someone killed Epstein.')
 			assertEquals(output, 'Someone [killed] [Epstein].')
 		})
 
 		await t.step('with default English stemmer', () => {
 			const words = ['signify']
-			const obfuscator = new WrappingObfuscator({ prng: prng(), words })
+			const obfuscator = new WrappingObfuscator(words, { prng: prng() })
 			const output = obfuscator.obfuscate('signify, signifies, signified, signifying, signifyxyz')
 			assertEquals(output, '[signify], [signifies], [signified], [signifying], signifyxyz')
 		})
 
 		await t.step('with Spanish stemmer', () => {
 			const words = ['significar']
-			const obfuscator = new WrappingObfuscator({ prng: prng(), stemmer: new SpanishStemmer(), words })
+			const obfuscator = new WrappingObfuscator(words, { prng: prng(), stemmer: new SpanishStemmer() })
 			const output = obfuscator.obfuscate('significar, significaste, significó, significando, significarxyz')
 			assertEquals(output, '[significar], [significaste], [significó], [significando], significarxyz')
 		})

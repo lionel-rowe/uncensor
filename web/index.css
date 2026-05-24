@@ -1,0 +1,151 @@
+:root {
+	--bg: #f6f7f9;
+	--card: #ffffff;
+	--text: #1e2430;
+	--muted: #5b6678;
+	--border: #d7dce5;
+	--accent: #0f766e;
+	--tab-active-bg: #ffffff;
+	--tab-hover-bg: #eef2f7;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	font: 15px/1.45 'Segoe UI', 'Noto Sans', sans-serif;
+	color: var(--text);
+	background: linear-gradient(180deg, #eef2f7 0%, var(--bg) 100%);
+	min-height: 100dvh;
+}
+
+.app {
+	max-width: 900px;
+	margin: 2rem auto;
+	padding: 0 1rem;
+}
+
+/* ── Tab bar ── */
+.tabs {
+	display: flex;
+	gap: 0;
+	border-bottom: none;
+}
+
+.tab {
+	display: inline-block;
+	padding: 0.55rem 1.1rem;
+	border: 1px solid var(--border);
+	border-bottom: none;
+	border-radius: 8px 8px 0 0;
+	background: var(--bg);
+	color: var(--muted);
+	text-decoration: none;
+	font-weight: 500;
+	font-size: 0.95rem;
+	cursor: pointer;
+	transition: background 0.15s, color 0.15s;
+	margin-right: 3px;
+	position: relative;
+	bottom: -1px;
+}
+
+.tab:hover {
+	background: var(--tab-hover-bg);
+	color: var(--text);
+}
+
+.tab[aria-selected='true'] {
+	background: var(--tab-active-bg);
+	color: var(--accent);
+	font-weight: 600;
+	border-color: var(--border);
+	z-index: 1;
+}
+
+/* ── Card ── */
+.card {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 0 8px 8px 8px;
+	padding: 1.25rem;
+	box-shadow: 0 6px 18px rgba(10, 20, 40, 0.06);
+}
+
+/* ── Panel ── */
+.panel[hidden] {
+	display: none;
+}
+
+/* ── Layout ── */
+.grid {
+	display: grid;
+	gap: 0.85rem;
+}
+
+@media (min-width: 780px) {
+	.grid.two {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 0.35rem;
+}
+
+textarea {
+	width: 100%;
+	min-height: 9rem;
+	padding: 0.6rem;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font: inherit;
+	resize: vertical;
+}
+
+.words {
+	min-height: 12rem;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.55rem;
+	margin: 0.85rem 0 0;
+}
+
+button {
+	border: 1px solid var(--border);
+	background: #fff;
+	color: var(--text);
+	padding: 0.5rem 0.8rem;
+	border-radius: 8px;
+	cursor: pointer;
+	font: inherit;
+	transition: background 0.15s;
+}
+
+button:hover {
+	background: var(--tab-hover-bg);
+}
+
+button.primary {
+	background: var(--accent);
+	color: #fff;
+	border-color: var(--accent);
+}
+
+button.primary:hover {
+	background: #0d6560;
+}
+
+.hint {
+	font-size: 0.9rem;
+	color: var(--muted);
+	margin: 0.4rem 0 0;
+}

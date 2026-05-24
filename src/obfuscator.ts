@@ -37,15 +37,23 @@ const directionalOverriddenPartRe = new StatelessRegExp(
 	'u',
 )
 
-// modified from https://gist.github.com/StevenACoffman/a5f6f682d94e38ed804182dc2693ed4b?permalink_comment_id=5406875#gistcomment-5406875
-// and https://en.wiktionary.org/wiki/Appendix:Variations_of_%22a%22 etc.
-// supplemented with chars from
-// 𝖠𝖡𝖢𝖣𝖤𝖥𝖦𝖧𝖨𝖩𝖪𝖫𝖬𝖭𝖮𝖯𝖰𝖱𝖲𝖳𝖴𝖵𝖶𝖷𝖸𝖹 𝖺𝖻𝖼𝖽𝖾𝖿𝗀𝗁𝗂𝗃𝗄𝗅𝗆𝗇𝗈𝗉𝗊𝗋𝗌𝗍𝗎𝗏𝗐𝗑𝗒𝗓
-// when others unavailable
+/**
+ * Modified from [StevenACoffman/Homoglyphs.md](https://gist.github.com/StevenACoffman/a5f6f682d94e38ed804182dc2693ed4b?permalink_comment_id=5406875#gistcomment-5406875)
+ * and [Wiktionary apendices](https://en.wiktionary.org/wiki/Appendix:Variations_of_%22a%22), and
+ * supplemented with chars from "sans-serif" Unicode variants when others unavailable
+ * (these are less ideal as they normalize to the regular ASCII equivalents with NFK[CD] forms,
+ * so we only use them as a backup).
+ * ```
+ * 𝖠𝖡𝖢𝖣𝖤𝖥𝖦𝖧𝖨𝖩𝖪𝖫𝖬𝖭𝖮𝖯𝖰𝖱𝖲𝖳𝖴𝖵𝖶𝖷𝖸𝖹
+ * 𝖺𝖻𝖼𝖽𝖾𝖿𝗀𝗁𝗂𝗃𝗄𝗅𝗆𝗇𝗈𝗉𝗊𝗋𝗌𝗍𝗎𝗏𝗐𝗑𝗒𝗓
+ * ```
+ */
 const homoglyphs = [
 	'aа',
 	'AΑА',
-	'bߕ',
+	// Sadly "ߕ" is unusable as it doesn't play well with directionality chars
+	// due to being N'ko script (an RTL script)
+	'b𝖻',
 	'BВΒ',
 	'cсϲ',
 	'CС',
@@ -97,26 +105,16 @@ const homoglyphs = [
 	'ZⲌΖ',
 ]
 
-const words = (await Deno.readTextFile(new URL(import.meta.resolve('../data/words.txt'))))
-	.split('\n')
-	.map((x) => {
-		const trimmed = x.trim()
-		if (!trimmed || trimmed.startsWith('#') || '') return null
-		return trimmed
-	}).filter((x) => x != null)
-
 type ObfuscatorOptions = {
 	prng: () => number
 	locale: string | Intl.Locale
 	stemmer: Stemmer
-	words: string[]
 }
 
 const defaultOptions: ObfuscatorOptions = {
 	prng: Math.random,
 	locale: 'en-US',
 	stemmer: new EnglishStemmer(),
-	words,
 }
 
 function createScriptRe(locale: string | Intl.Locale): StatelessRegExp {
@@ -179,14 +177,14 @@ export class Obfuscator {
 	#converter: CharConverter
 	#reverter: CharConverter
 
-	constructor(options?: Partial<ObfuscatorOptions>) {
+	constructor(words: string[], options?: Partial<ObfuscatorOptions>) {
 		const opts = { ...defaultOptions, ...options }
 		this.#locale = new Intl.Locale(opts.locale)
 		this.#segmenter = new Intl.Segmenter(this.#locale, { granularity: 'word' })
 		this.#prng = opts.prng
 		this.#stemmer = opts.stemmer
 
-		const wordStemRegexParts = opts.words.map((w) => RegExp.escape(this.#normalize(w)))
+		const wordStemRegexParts = words.map((w) => RegExp.escape(this.#normalize(w)))
 
 		this.#targetWordRe = new StatelessRegExp(
 			String.raw`^(?:${wordStemRegexParts.sort((a, b) => b.length - a.length).join('|')})$`,

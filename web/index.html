@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Uncensor</title>
+		<link rel="stylesheet" href="index.css" />
+	</head>
+	<body>
+		<div class="app">
+			<h1>Uncensor</h1>
+			<nav class="tabs" role="tablist">
+				<a class="tab" href="#obfuscate" role="tab" id="tab-obfuscate">Obfuscate</a>
+				<a class="tab" href="#edit-words" role="tab" id="tab-edit-words">Edit Words</a>
+			</nav>
+
+			<main class="card">
+				<section id="panel-obfuscate" class="panel" role="tabpanel" aria-labelledby="tab-obfuscate" hidden>
+					<div class="grid two">
+						<div>
+							<label for="obf-input">Plain</label>
+							<textarea id="obf-input" placeholder="Type plain text here..."></textarea>
+						</div>
+						<div>
+							<label for="deobf-input">Obfuscated</label>
+							<textarea id="deobf-input" placeholder="Type obfuscated text here..."></textarea>
+						</div>
+					</div>
+				</section>
+
+				<!-- Edit Words panel -->
+				<section id="panel-edit-words" class="panel" role="tabpanel" aria-labelledby="tab-edit-words" hidden>
+					<label for="words">Words list</label>
+					<textarea id="words" class="words" placeholder="One word per line (default: empty list)"></textarea>
+					<p class="hint">One word per line, or comma-separated. Example: spam, rudeword</p>
+				</section>
+			</main>
+		</div>
+
+		<script type="module" src="index.mjs"></script>
+	</body>
+</html>

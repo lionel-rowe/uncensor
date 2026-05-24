@@ -1,10 +1,12 @@
 import { Input } from '@cliffy/prompt'
 import { Command } from '@cliffy/command'
-import { Obfuscator } from './main.ts'
+import { Obfuscator } from './obfuscator.ts'
 import { bgMagenta, bold } from '@std/fmt/colors'
 import { fromFileUrl } from '@std/path'
+import { parseWords } from './parseWords.ts'
 
-const obfuscator = new Obfuscator()
+const words = parseWords(await Deno.readTextFile(new URL('../data/words.txt', import.meta.url)))
+const obfuscator = new Obfuscator(words)
 
 new Command()
 	.name('uncensor')
