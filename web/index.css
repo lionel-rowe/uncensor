@@ -9,21 +9,22 @@
 	--tab-hover-bg: #eef2f7;
 }
 
-* {
+*, *::before, *::after {
 	box-sizing: border-box;
 }
 
 body {
-	margin: 0;
+	--margin-y: 2rem;
+	margin: var(--margin-y) 0;
 	font: 15px/1.45 'Segoe UI', 'Noto Sans', sans-serif;
 	color: var(--text);
 	background: linear-gradient(180deg, #eef2f7 0%, var(--bg) 100%);
-	min-height: 100dvh;
+	min-height: calc(100dvh - var(--margin-y) * 2);
 }
 
 .app {
 	max-width: 900px;
-	margin: 2rem auto;
+	margin: 0 auto;
 	padding: 0 1rem;
 }
 
@@ -62,9 +63,9 @@ body {
 	color: var(--accent);
 	font-weight: 600;
 	border-color: var(--border);
-	z-index: 1;
+	position: relative;
+	z-index: 2;
 }
-
 /* ── Card ── */
 .card {
 	background: var(--card);
@@ -72,6 +73,8 @@ body {
 	border-radius: 0 8px 8px 8px;
 	padding: 1.25rem;
 	box-shadow: 0 6px 18px rgba(10, 20, 40, 0.06);
+	position: relative;
+	z-index: 1;
 }
 
 /* ── Panel ── */
@@ -97,6 +100,13 @@ label {
 	margin-bottom: 0.35rem;
 }
 
+.field-label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 0.35rem;
+	cursor: default;
+}
+
 textarea {
 	width: 100%;
 	min-height: 9rem;
@@ -105,6 +115,30 @@ textarea {
 	border-radius: 8px;
 	font: inherit;
 	resize: vertical;
+	field-sizing: content;
+}
+
+.editor {
+	width: 100%;
+	min-height: 9rem;
+	padding: 0.6rem;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font: inherit;
+	color: var(--text);
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+	overflow: auto;
+	resize: vertical;
+	field-sizing: content;
+	caret-color: var(--text);
+	background: #fff;
+}
+
+.editor:empty::before {
+	content: attr(data-placeholder);
+	color: var(--muted);
+	pointer-events: none;
 }
 
 .words {
@@ -148,4 +182,13 @@ button.primary:hover {
 	font-size: 0.9rem;
 	color: var(--muted);
 	margin: 0.4rem 0 0;
+}
+
+::highlight(target-plain) {
+	background-color: #ffeb3b;
+}
+
+::highlight(target-obfuscated) {
+	background-color: #ff00ff;
+	color: #ffffff;
 }

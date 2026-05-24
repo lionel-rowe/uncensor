@@ -7,39 +7,173 @@ import { throttle } from '@std/async/unstable-throttle'
 
 type EditSource = 'plain' | 'obfuscated'
 
-const $words = getElementById('words', HTMLTextAreaElement)
-const $plainInput = getElementById('obf-input', HTMLTextAreaElement)
-const $obfuscatedInput = getElementById('deobf-input', HTMLTextAreaElement)
+type OffsetRange = readonly [start: number, end: number]
 
-$words.value = localStorage.getItem('uncensor:word-list') ?? localStorage.getItem('uncensor:words') ?? ''
-$plainInput.value = localStorage.getItem('uncensor:plain-input') ?? localStorage.getItem('uncensor:obf-input') ?? ''
-$obfuscatedInput.value = localStorage.getItem('uncensor:obfuscated-input') ??
-	localStorage.getItem('uncensor:deobf-input') ?? ''
+type HighlightRegistryLike = {
+	set(name: string, highlight: unknown): void
+	delete(name: string): void
+}
+
+const PLAIN_HIGHLIGHT_NAME = 'target-plain'
+const OBFUSCATED_HIGHLIGHT_NAME = 'target-obfuscated'
+
+const $wordListInput = getElementById('words', HTMLTextAreaElement)
+const $plainEditor = getElementById('plain-input', HTMLDivElement)
+const $obfuscatedEditor = getElementById('obfuscated-input', HTMLDivElement)
+
+$wordListInput.value = localStorage.getItem('uncensor:word-list') ?? localStorage.getItem('uncensor:words') ?? ''
+setEditorText(
+	$plainEditor,
+	localStorage.getItem('uncensor:plain-input') ?? localStorage.getItem('uncensor:plain-input') ?? '',
+)
+setEditorText(
+	$obfuscatedEditor,
+	localStorage.getItem('uncensor:obfuscated-input') ?? localStorage.getItem('uncensor:obfuscated-input') ?? '',
+)
 let lastEdited: EditSource = localStorage.getItem('uncensor:last-edited-side') === 'obfuscated' ||
 		localStorage.getItem('uncensor:last-edited-side') === 'deobfuscate' ||
 		localStorage.getItem('uncensor:last-edited') === 'deobfuscate'
 	? 'obfuscated'
 	: 'plain'
 
-$words.addEventListener('input', () => localStorage.setItem('uncensor:word-list', $words.value))
-$plainInput.addEventListener('input', () => localStorage.setItem('uncensor:plain-input', $plainInput.value))
-$obfuscatedInput.addEventListener(
-	'input',
-	() => localStorage.setItem('uncensor:obfuscated-input', $obfuscatedInput.value),
-)
-
-// ── Obfuscator helpers ────────────────────────────────────────────────────────
+$wordListInput.addEventListener('input', () => localStorage.setItem('uncensor:word-list', $wordListInput.value))
+$plainEditor.addEventListener('input', () => localStorage.setItem('uncensor:plain-input', getEditorText($plainEditor)))
+$obfuscatedEditor.addEventListener('input', () => {
+	localStorage.setItem('uncensor:obfuscated-input', getEditorText($obfuscatedEditor))
+})
 
 function createObfuscator() {
-	const words = $words.value.split(/[\n,]+/).map((w) => w.trim()).filter(Boolean)
+	const words = $wordListInput.value.split(/[\n,]+/).map((w) => w.trim()).filter(Boolean)
 	return new Obfuscator(words)
+}
+
+function getTargetRanges(obfuscator: Obfuscator, plainText: string): {
+	plainRanges: OffsetRange[]
+	obfuscatedRanges: OffsetRange[]
+} {
+	const plainRanges: OffsetRange[] = []
+	const obfuscatedRanges: OffsetRange[] = []
+	let obfuscatedOffset = 0
+
+	for (const part of obfuscator.obfuscateToParts(plainText)) {
+		const nextOffset = obfuscatedOffset + part.content.length
+		if (part.kind === 'obfuscated') {
+			plainRanges.push([part.start, part.end])
+			obfuscatedRanges.push([obfuscatedOffset, nextOffset])
+		}
+
+		obfuscatedOffset = nextOffset
+	}
+
+	return { plainRanges, obfuscatedRanges }
+}
+
+function updateHighlights(obfuscator: Obfuscator) {
+	if (!supportsCustomHighlight()) return
+
+	const plainText = getEditorText($plainEditor)
+	const { plainRanges, obfuscatedRanges } = getTargetRanges(obfuscator, plainText)
+	applyHighlight(PLAIN_HIGHLIGHT_NAME, $plainEditor, plainRanges)
+	applyHighlight(OBFUSCATED_HIGHLIGHT_NAME, $obfuscatedEditor, obfuscatedRanges)
+}
+
+function supportsCustomHighlight(): boolean {
+	return typeof CSS.highlights === 'object' && typeof globalThis.Highlight === 'function'
+}
+
+function getEditorText(editor: HTMLDivElement): string {
+	return editor.textContent ?? ''
+}
+
+function setEditorText(editor: HTMLDivElement, value: string) {
+	editor.textContent = value
+}
+
+function applyHighlight(name: string, root: HTMLElement, ranges: OffsetRange[]) {
+	const registry = getHighlightRegistry()
+	if (!registry) return
+
+	registry.delete(name)
+	if (ranges.length === 0) return
+
+	const indexedNodes = indexTextNodes(root)
+	if (indexedNodes.length === 0) return
+
+	const textLength = indexedNodes[indexedNodes.length - 1].end
+	const validRanges = ranges.filter(([start, end]) => {
+		return Number.isInteger(start) && Number.isInteger(end) && start >= 0 && start < end && end <= textLength
+	})
+
+	if (validRanges.length === 0) return
+
+	const highlightRanges = validRanges.map(([start, end]) => {
+		const startPosition = locateTextPosition(indexedNodes, start)
+		const endPosition = locateTextPosition(indexedNodes, end)
+		assert(startPosition != null && endPosition != null, 'Highlight range position must exist')
+
+		const range = new Range()
+		range.setStart(startPosition.node, startPosition.offset)
+		range.setEnd(endPosition.node, endPosition.offset)
+		return range
+	})
+
+	const HighlightCtor = globalThis.Highlight as new (...ranges: Range[]) => unknown
+	registry.set(name, new HighlightCtor(...highlightRanges))
+}
+
+function getHighlightRegistry(): HighlightRegistryLike | null {
+	const cssWithHighlights = CSS as unknown as { highlights?: HighlightRegistryLike }
+	return cssWithHighlights.highlights ?? null
+}
+
+type IndexedTextNode = {
+	node: Text
+	start: number
+	end: number
+}
+
+function indexTextNodes(root: HTMLElement): IndexedTextNode[] {
+	const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+	const nodes: IndexedTextNode[] = []
+	let offset = 0
+
+	while (true) {
+		const next = walker.nextNode()
+		if (!(next instanceof Text)) break
+
+		const length = next.data.length
+		if (length === 0) continue
+
+		nodes.push({ node: next, start: offset, end: offset + length })
+		offset += length
+	}
+
+	return nodes
+}
+
+function locateTextPosition(
+	nodes: IndexedTextNode[],
+	index: number,
+): { node: Text; offset: number } | null {
+	for (const part of nodes) {
+		if (index < part.end) {
+			return { node: part.node, offset: index - part.start }
+		}
+	}
+
+	const last = nodes.at(-1)
+	if (!last) return null
+	if (index === last.end) return { node: last.node, offset: last.node.length }
+
+	return null
 }
 
 const syncFromPlain = throttle(
 	() => {
 		const obfuscator = createObfuscator()
-		$obfuscatedInput.value = obfuscator.obfuscate($plainInput.value)
-		localStorage.setItem('uncensor:obfuscated-input', $obfuscatedInput.value)
+		setEditorText($obfuscatedEditor, obfuscator.obfuscate(getEditorText($plainEditor)))
+		localStorage.setItem('uncensor:obfuscated-input', getEditorText($obfuscatedEditor))
+		updateHighlights(obfuscator)
 	},
 	(previousDuration: number) => previousDuration,
 	{ ensureLastCall: true },
@@ -48,26 +182,27 @@ const syncFromPlain = throttle(
 const syncFromObfuscated = throttle(
 	() => {
 		const obfuscator = createObfuscator()
-		$plainInput.value = obfuscator.deobfuscate($obfuscatedInput.value)
-		localStorage.setItem('uncensor:plain-input', $plainInput.value)
+		setEditorText($plainEditor, obfuscator.deobfuscate(getEditorText($obfuscatedEditor)))
+		localStorage.setItem('uncensor:plain-input', getEditorText($plainEditor))
+		updateHighlights(obfuscator)
 	},
 	(previousDuration: number) => previousDuration,
 	{ ensureLastCall: true },
 )
 
-$plainInput.addEventListener('input', () => {
+$plainEditor.addEventListener('input', () => {
 	lastEdited = 'plain'
 	localStorage.setItem('uncensor:last-edited-side', lastEdited)
 	syncFromPlain()
 })
 
-$obfuscatedInput.addEventListener('input', () => {
+$obfuscatedEditor.addEventListener('input', () => {
 	lastEdited = 'obfuscated'
 	localStorage.setItem('uncensor:last-edited-side', lastEdited)
 	syncFromObfuscated()
 })
 
-$words.addEventListener('input', () => {
+$wordListInput.addEventListener('input', () => {
 	if (lastEdited === 'obfuscated') {
 		syncFromObfuscated()
 	} else {
@@ -113,4 +248,16 @@ function getElementById<T extends Element = HTMLElement>(
 	const el = document.getElementById(id)
 	assert(el instanceof Expect, `Element with id "${id}" is not a ${Expect.name}`)
 	return el
+}
+
+// fix for contenteditable vs textarea
+for (const $labeledBy of document.querySelectorAll('.editor[aria-labelledby]')) {
+	if (!($labeledBy instanceof HTMLElement)) continue
+	const labelId = $labeledBy.getAttribute('aria-labelledby')!
+	const $label = document.getElementById(labelId)
+	if ($label == null) continue
+
+	$label.addEventListener('click', () => {
+		$labeledBy.focus()
+	})
 }

@@ -18,12 +18,30 @@
 				<section id="panel-obfuscate" class="panel" role="tabpanel" aria-labelledby="tab-obfuscate" hidden>
 					<div class="grid two">
 						<div>
-							<label for="obf-input">Plain</label>
-							<textarea id="obf-input" placeholder="Type plain text here..."></textarea>
+							<div id="label-plain-input" class="field-label">Plain</div>
+							<div
+								id="plain-input"
+								class="editor"
+								contenteditable="plaintext-only"
+								role="textbox"
+								aria-multiline="true"
+								aria-labelledby="label-plain-input"
+								data-placeholder="Type plain text here..."
+							>
+							</div>
 						</div>
 						<div>
-							<label for="deobf-input">Obfuscated</label>
-							<textarea id="deobf-input" placeholder="Type obfuscated text here..."></textarea>
+							<div id="label-obfuscated-input" class="field-label">Obfuscated</div>
+							<div
+								id="obfuscated-input"
+								class="editor"
+								contenteditable="plaintext-only"
+								role="textbox"
+								aria-multiline="true"
+								aria-labelledby="label-obfuscated-input"
+								data-placeholder="Type obfuscated text here..."
+							>
+							</div>
 						</div>
 					</div>
 				</section>
