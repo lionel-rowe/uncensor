@@ -217,6 +217,11 @@ textarea {
 	color: var(--muted);
 }
 
+.editor .cm-transformed-target-word {
+	background-color: #ff00ff;
+	color: #ffffff;
+}
+
 .words {
 	min-height: 12rem;
 	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;

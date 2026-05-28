@@ -248,7 +248,7 @@ export class Obfuscator {
 	deobfuscate(text: string): string {
 		return this.#reverter.convert(text)
 			.replaceAll(directionalOverriddenPartRe.asStateful('g'), (m) => {
-				return [...m.slice(1, -1)].reverse().join('')
+				return [...m].slice(1, -1).reverse().join('')
 			})
 			.replaceAll(allInvisiblesRe.asStateful('g'), '')
 			.normalize('NFC')

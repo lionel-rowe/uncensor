@@ -3,8 +3,8 @@
 
 import { Obfuscator } from '../obfuscator.ts'
 import { assert } from '@std/assert/assert'
-import { type ChangeSpec, EditorState } from '@codemirror/state'
-import { EditorView, placeholder } from '@codemirror/view'
+import { type ChangeSpec, EditorState, RangeSetBuilder, StateEffect, StateField } from '@codemirror/state'
+import { Decoration, type DecorationSet, EditorView, placeholder } from '@codemirror/view'
 import { type Diff, DIFF_DELETE, DIFF_EQUAL, DIFF_INSERT, diff_match_patch } from '@dmsnell/diff-match-patch'
 import { ls } from './localStorage.ts'
 import { getRandomValuesSeeded, nextFloat64 } from '@std/random'
@@ -23,6 +23,26 @@ const dmp = new diff_match_patch()
 
 type Mode = 'obfuscate' | 'deobfuscate'
 
+const transformedWordMark = Decoration.mark({ class: 'cm-transformed-target-word' })
+const setTransformedWordHighlights = StateEffect.define<DecorationSet>()
+const transformedWordHighlights = StateField.define<DecorationSet>({
+	create() {
+		return Decoration.none
+	},
+	update(highlights, tr) {
+		highlights = highlights.map(tr.changes)
+
+		for (const effect of tr.effects) {
+			if (effect.is(setTransformedWordHighlights)) {
+				return effect.value
+			}
+		}
+
+		return highlights
+	},
+	provide: (f) => EditorView.decorations.from(f),
+})
+
 const $wordListInput = getElementById('words', HTMLTextAreaElement)
 const $textEditorHost = getElementById('text-input', HTMLDivElement)
 
@@ -34,6 +54,7 @@ const textEditor = new EditorView({
 		doc: getInitialText(),
 		extensions: [
 			EditorView.lineWrapping,
+			transformedWordHighlights,
 			placeholder('Type text here...'),
 			EditorView.contentAttributes.of({
 				'aria-labelledby': $labelTextInput.id,
@@ -54,6 +75,7 @@ const current = textEditor.state.doc.toString()
 const plain = obfuscator.deobfuscate(current)
 const next = transformText(plain)
 patchEditorText(current, next)
+refreshTransformedWordHighlights(next)
 
 let isUpdating = false
 
@@ -97,7 +119,30 @@ function reapplyTransformation() {
 		}
 	}
 
+	refreshTransformedWordHighlights(next)
+
 	ls.set('uncensor:text-input', plain)
+}
+
+function refreshTransformedWordHighlights(transformedText: string) {
+	textEditor.dispatch({
+		effects: setTransformedWordHighlights.of(createTransformedWordHighlights(transformedText)),
+	})
+}
+
+function createTransformedWordHighlights(transformedText: string): DecorationSet {
+	if (getSelectedMode() !== 'obfuscate') return Decoration.none
+
+	const obfuscator = createObfuscator()
+	const ranges = new RangeSetBuilder<Decoration>()
+
+	for (const x of transformedText.matchAll(/[^\p{P}\p{Z}\n]+/gu)) {
+		if (obfuscator.isObfuscated(x[0])) {
+			ranges.add(x.index, x.index + x[0].length, transformedWordMark)
+		}
+	}
+
+	return ranges.finish()
 }
 
 function patchEditorText(currentText: string, nextText: string) {
@@ -174,6 +219,8 @@ function applyHash() {
 		$tab.setAttribute('aria-selected', String(isActive))
 		$panel.hidden = !isActive
 	}
+
+	refreshTransformedWordHighlights(textEditor.state.doc.toString())
 }
 
 globalThis.addEventListener('hashchange', applyHash)
