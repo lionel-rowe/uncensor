@@ -253,4 +253,12 @@ export class Obfuscator {
 			.replaceAll(allInvisiblesRe.asStateful('g'), '')
 			.normalize('NFC')
 	}
+
+	isTargetWord(word: string): boolean {
+		return this.#targetWordRe.test(this.#normalize(word))
+	}
+
+	isObfuscated(text: string): boolean {
+		return directionalOverriddenPartRe.test(text) || allInvisiblesRe.test(text)
+	}
 }

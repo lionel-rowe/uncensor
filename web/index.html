@@ -10,55 +10,20 @@
 		<div class="app">
 			<h1>Uncensor</h1>
 			<nav class="tabs" role="tablist">
-				<a class="tab" href="#obfuscate" role="tab" id="tab-obfuscate">Obfuscate</a>
-				<a class="tab" href="#edit-words" role="tab" id="tab-edit-words">Edit Words</a>
+				<a class="tab" href="#" role="tab" id="tab-obfuscate">Obfuscate</a>
+				<a class="tab" href="#word-list" role="tab" id="tab-word-list">Word List</a>
 			</nav>
 
 			<main class="card">
 				<section id="panel-obfuscate" class="panel" role="tabpanel" aria-labelledby="tab-obfuscate" hidden>
-					<div class="grid two">
-						<div>
-							<div id="label-plain-input" class="field-label">Plain</div>
-							<div
-								id="plain-input"
-								class="editor"
-								contenteditable="plaintext-only"
-								role="textbox"
-								aria-multiline="true"
-								aria-labelledby="label-plain-input"
-								data-placeholder="Type plain text here..."
-							>
-							</div>
-						</div>
-						<div>
-							<div class="field-label-row">
-								<div id="label-obfuscated-input" class="field-label">Obfuscated</div>
-								<button
-									id="copy-obfuscated"
-									type="button"
-									class="copy-btn"
-									aria-label="Copy obfuscated text"
-								>
-									Copy
-								</button>
-							</div>
-							<div
-								id="obfuscated-input"
-								class="editor"
-								contenteditable="plaintext-only"
-								role="textbox"
-								aria-multiline="true"
-								aria-labelledby="label-obfuscated-input"
-								data-placeholder="Type obfuscated text here..."
-							>
-							</div>
-						</div>
+					<div>
+						<div id="label-text-input" class="field-label">Text</div>
+						<div id="text-input" class="editor"></div>
 					</div>
 				</section>
 
-				<!-- Edit Words panel -->
-				<section id="panel-edit-words" class="panel" role="tabpanel" aria-labelledby="tab-edit-words" hidden>
-					<label for="words">Words list</label>
+				<section id="panel-word-list" class="panel" role="tabpanel" aria-labelledby="tab-word-list" hidden>
+					<label for="words">Word list</label>
 					<textarea id="words" class="words" placeholder="One word per line (default: empty list)"></textarea>
 					<p class="hint">One word per line, or comma-separated. Example: spam, rudeword</p>
 				</section>
