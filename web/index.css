@@ -218,8 +218,12 @@ textarea {
 }
 
 .editor .cm-transformed-target-word {
-	background-color: #ff00ff;
+	background-color: fuchsia;
 	color: #ffffff;
+}
+
+.editor .cm-target-word {
+	outline: 1px dashed fuchsia;
 }
 
 .words {
@@ -270,6 +274,6 @@ button.primary:hover {
 }
 
 ::highlight(target-obfuscated) {
-	background-color: #ff00ff;
+	background-color: fuchsia;
 	color: #ffffff;
 }

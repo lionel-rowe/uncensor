@@ -8,9 +8,12 @@ import { Decoration, type DecorationSet, EditorView, placeholder } from '@codemi
 import { type Diff, DIFF_DELETE, DIFF_EQUAL, DIFF_INSERT, diff_match_patch } from '@dmsnell/diff-match-patch'
 import { ls } from './localStorage.ts'
 import { getRandomValuesSeeded, nextFloat64 } from '@std/random'
+import { StatelessRegExp } from '../utils.ts'
 
 const DEFAULT_HASH = 'obfuscate'
-const VALID_HASHES = new Set([DEFAULT_HASH, 'word-list'])
+const VALID_HASHES = [DEFAULT_HASH, 'deobfuscate', 'word-list'] as const
+const validHashes = new Set<string>(VALID_HASHES)
+const wordPartRe = new StatelessRegExp(/[^\p{P}\p{Z}\n]+/u)
 
 const SEED = crypto.getRandomValues(new BigUint64Array(1))[0]
 
@@ -22,8 +25,10 @@ function prng() {
 const dmp = new diff_match_patch()
 
 type Mode = 'obfuscate' | 'deobfuscate'
+type HashView = (typeof VALID_HASHES)[number]
 
 const transformedWordMark = Decoration.mark({ class: 'cm-transformed-target-word' })
+const deobfuscatedTargetWordMark = Decoration.mark({ class: 'cm-target-word' })
 const setTransformedWordHighlights = StateEffect.define<DecorationSet>()
 const transformedWordHighlights = StateField.define<DecorationSet>({
 	create() {
@@ -73,9 +78,10 @@ const textEditor = new EditorView({
 const obfuscator = createObfuscator()
 const current = textEditor.state.doc.toString()
 const plain = obfuscator.deobfuscate(current)
-const next = transformText(plain)
+const mode = getSelectedMode()
+const next = mode == null ? current : transformText(plain, obfuscator, mode)
 patchEditorText(current, next)
-refreshTransformedWordHighlights(next)
+refreshTransformedWordHighlights(next, obfuscator, mode)
 
 let isUpdating = false
 
@@ -89,8 +95,9 @@ function getInitialText(): string {
 	return storedText ?? ''
 }
 
-function getSelectedMode(): Mode {
-	return getActiveHash() === 'deobfuscate' ? 'deobfuscate' : 'obfuscate'
+function getSelectedMode(): Mode | undefined {
+	const hash = getActiveHash()
+	return hash === 'word-list' ? undefined : hash
 }
 
 function createObfuscator() {
@@ -98,9 +105,7 @@ function createObfuscator() {
 	return new Obfuscator(words, { prng: prng() })
 }
 
-function transformText(text: string): string {
-	const obfuscator = createObfuscator()
-	const mode = getSelectedMode()
+function transformText(text: string, obfuscator: Obfuscator, mode: Mode): string {
 	return mode === 'obfuscate' ? obfuscator.obfuscate(text) : obfuscator.deobfuscate(text)
 }
 
@@ -108,7 +113,8 @@ function reapplyTransformation() {
 	const obfuscator = createObfuscator()
 	const current = textEditor.state.doc.toString()
 	const plain = obfuscator.deobfuscate(current)
-	const next = transformText(plain)
+	const mode = getSelectedMode()
+	const next = mode == null ? current : transformText(plain, obfuscator, mode)
 
 	if (next !== current) {
 		isUpdating = true
@@ -119,26 +125,34 @@ function reapplyTransformation() {
 		}
 	}
 
-	refreshTransformedWordHighlights(next)
+	refreshTransformedWordHighlights(next, obfuscator, mode)
 
 	ls.set('uncensor:text-input', plain)
 }
 
-function refreshTransformedWordHighlights(transformedText: string) {
+function refreshTransformedWordHighlights(transformedText: string, obfuscator: Obfuscator, mode = getSelectedMode()) {
 	textEditor.dispatch({
-		effects: setTransformedWordHighlights.of(createTransformedWordHighlights(transformedText)),
+		effects: setTransformedWordHighlights.of(createTransformedWordHighlights(transformedText, obfuscator, mode)),
 	})
 }
 
-function createTransformedWordHighlights(transformedText: string): DecorationSet {
-	if (getSelectedMode() !== 'obfuscate') return Decoration.none
+function createTransformedWordHighlights(
+	transformedText: string,
+	obfuscator: Obfuscator,
+	mode = getSelectedMode(),
+): DecorationSet {
+	if (mode == null) return Decoration.none
 
-	const obfuscator = createObfuscator()
 	const ranges = new RangeSetBuilder<Decoration>()
 
-	for (const x of transformedText.matchAll(/[^\p{P}\p{Z}\n]+/gu)) {
-		if (obfuscator.isObfuscated(x[0])) {
-			ranges.add(x.index, x.index + x[0].length, transformedWordMark)
+	for (const x of transformedText.matchAll(wordPartRe.asStateful('g'))) {
+		const word = x[0]
+		const start = x.index
+		if (mode === 'obfuscate' && obfuscator.isObfuscated(word)) {
+			ranges.add(start, start + word.length, transformedWordMark)
+		}
+		if (mode === 'deobfuscate' && obfuscator.isTargetWord(word)) {
+			ranges.add(start, start + word.length, deobfuscatedTargetWordMark)
 		}
 	}
 
@@ -201,7 +215,7 @@ function diffsToChanges(diffs: Diff[]): ChangeSpec[] {
 
 function getActiveHash() {
 	const hash = location.hash.slice(1)
-	return VALID_HASHES.has(hash) ? hash : DEFAULT_HASH
+	return validHashes.has(hash) ? hash as HashView : DEFAULT_HASH
 }
 
 function applyHash() {
@@ -213,14 +227,18 @@ function applyHash() {
 
 	for (const id of VALID_HASHES) {
 		const $tab = getElementById(`tab-${id}`)
-		const $panel = getElementById(`panel-${id}`)
 		const isActive = id === active
 
 		$tab.setAttribute('aria-selected', String(isActive))
-		$panel.hidden = !isActive
 	}
 
-	refreshTransformedWordHighlights(textEditor.state.doc.toString())
+	const $textPanel = getElementById('panel-obfuscate')
+	const $wordListPanel = getElementById('panel-word-list')
+	const isWordListActive = active === 'word-list'
+	$textPanel.hidden = isWordListActive
+	$wordListPanel.hidden = !isWordListActive
+
+	reapplyTransformation()
 }
 
 globalThis.addEventListener('hashchange', applyHash)
