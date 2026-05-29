@@ -8,6 +8,8 @@
 	--tab-active-bg: #ffffff;
 	--tab-hover-bg: #eef2f7;
 	--border-radius: 5px;
+	--font: 15px/1.45 'Segoe UI', 'Noto Sans', sans-serif;
+	--uncensor-color: #f45058;
 }
 
 *, *::before, *::after {
@@ -17,7 +19,7 @@
 body {
 	--margin-y: 2rem;
 	margin: var(--margin-y) 0;
-	font: 15px/1.45 'Segoe UI', 'Noto Sans', sans-serif;
+	font: var(--font);
 	color: var(--text);
 	background: linear-gradient(180deg, #eef2f7 0%, var(--bg) 100%);
 	min-height: calc(100dvh - var(--margin-y) * 2);
@@ -142,6 +144,19 @@ label {
 	font-weight: 600;
 }
 
+.checkbox-label {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	font-weight: 500;
+	margin-bottom: 0.65rem;
+}
+
+.checkbox-label input {
+	margin: 0;
+	accent-color: var(--accent);
+}
+
 .field-label {
 	display: block;
 	font-weight: 600;
@@ -158,6 +173,7 @@ textarea {
 	font: inherit;
 	resize: none;
 	field-sizing: content;
+	font: var(--font);
 }
 
 .editor {
@@ -187,6 +203,7 @@ textarea {
 	overflow: auto;
 	font: inherit;
 	line-height: inherit;
+	cursor: text;
 }
 
 .editor .cm-content {
@@ -218,17 +235,16 @@ textarea {
 }
 
 .editor .cm-transformed-target-word {
-	background-color: fuchsia;
+	background-color: var(--uncensor-color);
 	color: #ffffff;
 }
 
 .editor .cm-target-word {
-	outline: 1px dashed fuchsia;
+	outline: 1px dashed var(--uncensor-color);
 }
 
 .words {
 	min-height: 12rem;
-	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 .row {
@@ -267,13 +283,4 @@ button.primary:hover {
 	font-size: 0.9rem;
 	color: var(--muted);
 	margin: 0.4rem 0 0;
-}
-
-::highlight(target-plain) {
-	background-color: #ffeb3b;
-}
-
-::highlight(target-obfuscated) {
-	background-color: fuchsia;
-	color: #ffffff;
 }

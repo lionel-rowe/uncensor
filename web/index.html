@@ -24,8 +24,12 @@
 				</section>
 
 				<section id="panel-word-list" class="panel" role="tabpanel" aria-labelledby="tab-word-list" hidden>
-					<label for="words">Word list</label>
-					<textarea id="words" class="words" placeholder="One word per line (default: empty list)"></textarea>
+					<label class="checkbox-label" for="include-default-words">
+						<input id="include-default-words" type="checkbox" checked />
+						Include default word list
+					</label>
+					<label for="words">Custom word list</label>
+					<textarea id="words" class="words" placeholder="One word per line"></textarea>
 					<p class="hint">One word per line, or comma-separated. Example: spam, rudeword</p>
 				</section>
 			</main>

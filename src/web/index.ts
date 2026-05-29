@@ -9,6 +9,8 @@ import { type Diff, DIFF_DELETE, DIFF_EQUAL, DIFF_INSERT, diff_match_patch } fro
 import { ls } from './localStorage.ts'
 import { getRandomValuesSeeded, nextFloat64 } from '@std/random'
 import { StatelessRegExp } from '../utils.ts'
+import defaultWordsJson from '../../data/defaultWords.json' with { type: 'json' }
+import { decode } from '../encoding.ts'
 
 const DEFAULT_HASH = 'obfuscate'
 const VALID_HASHES = [DEFAULT_HASH, 'deobfuscate', 'word-list'] as const
@@ -49,9 +51,12 @@ const transformedWordHighlights = StateField.define<DecorationSet>({
 })
 
 const $wordListInput = getElementById('words', HTMLTextAreaElement)
+const $includeDefaultWordsInput = getElementById('include-default-words', HTMLInputElement)
 const $textEditorHost = getElementById('text-input', HTMLDivElement)
+const defaultWords = defaultWordsJson.words.filter((x) => x != null).map(decode)
 
 $wordListInput.value = ls.get('uncensor:word-list') ?? ''
+$includeDefaultWordsInput.checked = getIncludeDefaultWordList()
 
 const $labelTextInput = getElementById('label-text-input', HTMLDivElement)
 const textEditor = new EditorView({
@@ -75,6 +80,24 @@ const textEditor = new EditorView({
 	parent: $textEditorHost,
 })
 
+textEditor.scrollDOM.addEventListener('click', (event) => {
+	if (event.defaultPrevented || event.button !== 0) return
+
+	const pos = textEditor.posAtCoords({
+		x: event.clientX,
+		y: event.clientY,
+	})
+
+	textEditor.dispatch({
+		selection: {
+			anchor: pos ?? textEditor.state.doc.length,
+		},
+		scrollIntoView: true,
+	})
+
+	textEditor.focus()
+})
+
 const obfuscator = createObfuscator()
 const current = textEditor.state.doc.toString()
 const plain = obfuscator.deobfuscate(current)
@@ -90,6 +113,11 @@ $wordListInput.addEventListener('input', () => {
 	reapplyTransformation()
 })
 
+$includeDefaultWordsInput.addEventListener('change', () => {
+	ls.set('uncensor:include-default-word-list', $includeDefaultWordsInput.checked ? '1' : '0')
+	reapplyTransformation()
+})
+
 function getInitialText(): string {
 	const storedText = ls.get('uncensor:text-input')
 	return storedText ?? ''
@@ -101,8 +129,15 @@ function getSelectedMode(): Mode | undefined {
 }
 
 function createObfuscator() {
-	const words = $wordListInput.value.split(/[\n,]+/).map((word) => word.trim()).filter(Boolean)
+	const customWords = $wordListInput.value.split(/[\n,]+/).map((word) => word.trim()).filter(Boolean)
+	const words = $includeDefaultWordsInput.checked ? [...new Set([...defaultWords, ...customWords])] : customWords
 	return new Obfuscator(words, { prng: prng() })
+}
+
+function getIncludeDefaultWordList(): boolean {
+	const stored = ls.get('uncensor:include-default-word-list')
+	if (stored == null) return true
+	return stored === '1'
 }
 
 function transformText(text: string, obfuscator: Obfuscator, mode: Mode): string {

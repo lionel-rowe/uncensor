@@ -2,10 +2,11 @@ import { Input } from '@cliffy/prompt'
 import { Command } from '@cliffy/command'
 import { Obfuscator } from './obfuscator.ts'
 import { bgMagenta, bold } from '@std/fmt/colors'
-import { fromFileUrl } from '@std/path'
-import { parseWords } from './parseWords.ts'
+import { decode, encode } from './encoding.ts'
+import { distinctBy } from '@std/collections'
+import defaultWordsJson from '../data/defaultWords.json' with { type: 'json' }
 
-const words = parseWords(await Deno.readTextFile(new URL('../data/words.txt', import.meta.url)))
+const words = defaultWordsJson.words.filter((x) => x != null).map(decode)
 const obfuscator = new Obfuscator(words)
 
 new Command()
@@ -27,10 +28,26 @@ new Command()
 	})
 	.command('edit', 'Edit the list of censored words')
 	.action(async () => {
+		const tmpFilePath = await Deno.makeTempFile({ suffix: '.txt' })
+		await Deno.writeTextFile(tmpFilePath, words.join('\n'))
+
 		await new Deno.Command(
 			'edit',
-			{ args: [fromFileUrl(import.meta.resolve('../data/words.txt'))] },
+			{ args: [tmpFilePath] },
 		).spawn().output()
+
+		const editedWords = distinctBy(
+			(await Deno.readTextFile(tmpFilePath)).split('\n')
+				.map((w) => w.trim()).filter(Boolean),
+			(w) => w.toLowerCase(),
+		)
+
+		await Deno.writeTextFile(
+			new URL('../data/defaultWords.json', import.meta.url),
+			JSON.stringify({ ...defaultWordsJson, words: [...editedWords.map(encode), null] }, null, '\t') + '\n',
+		)
+
+		await Deno.remove(tmpFilePath)
 	})
 	.parse(Deno.args)
 

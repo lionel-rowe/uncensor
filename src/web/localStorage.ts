@@ -1,4 +1,4 @@
-type LsKeySuffix = 'word-list' | 'text-input' | 'mode'
+type LsKeySuffix = 'word-list' | 'text-input' | 'mode' | 'include-default-word-list'
 type LsKey = `uncensor:${LsKeySuffix}`
 export const ls = {
 	get(key: LsKey) {
