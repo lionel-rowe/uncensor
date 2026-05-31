@@ -12,6 +12,6 @@
 2. Text will be obfuscated as you type. Target words will be obfuscated and highlighted in red.
 3. Copy the resulting, obfuscated text and paste it on the platform you want to post it to. The obfuscated words will appear near-identical to the original words when pasted to other platforms, but will no longer be readable by typical automated censorship systems.
 
-If you need to reverse the obfuscation, switch to the “Deobfuscate” tab.
+If you need to revert the obfuscation, switch to the “Revert” tab.
 
 You can also customise the word list for obfuscation in the “Word List” tab.

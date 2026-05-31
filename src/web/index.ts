@@ -13,7 +13,7 @@ import defaultWordsJson from '../../data/defaultWords.json' with { type: 'json' 
 import { decode } from '../encoding.ts'
 
 const DEFAULT_HASH = 'instructions' as const
-const VALID_HASHES = [DEFAULT_HASH, 'obfuscate', 'deobfuscate', 'word-list'] as const
+const VALID_HASHES = [DEFAULT_HASH, 'obfuscate', 'revert', 'word-list'] as const
 const validHashes = new Set<string>(VALID_HASHES)
 const wordPartRe = new StatelessRegExp(/[^\p{P}\p{Z}\n]+/u)
 
@@ -26,7 +26,7 @@ function prng() {
 
 const dmp = new diff_match_patch()
 
-type Mode = 'obfuscate' | 'deobfuscate'
+type Mode = 'obfuscate' | 'revert'
 type HashView = (typeof VALID_HASHES)[number]
 
 const transformedWordMark = Decoration.mark({ class: 'cm-transformed-target-word' })
@@ -127,7 +127,7 @@ function getSelectedMode(): Mode | undefined {
 	const hash = getActiveHash()
 	switch (hash) {
 		case 'obfuscate':
-		case 'deobfuscate':
+		case 'revert':
 			return hash
 		default:
 			return undefined
@@ -192,7 +192,7 @@ function createTransformedWordHighlights(
 		if (mode === 'obfuscate' && obfuscator.isObfuscated(word)) {
 			ranges.add(start, start + word.length, transformedWordMark)
 		}
-		if (mode === 'deobfuscate' && obfuscator.isTargetWord(word)) {
+		if (mode === 'revert' && obfuscator.isTargetWord(word)) {
 			ranges.add(start, start + word.length, deobfuscatedTargetWordMark)
 		}
 	}
@@ -276,7 +276,7 @@ function applyHash() {
 	const $instructionsPanel = getElementById('panel-instructions')
 	const $textPanel = getElementById('panel-obfuscate')
 	const $wordListPanel = getElementById('panel-word-list')
-	$textPanel.hidden = active !== 'obfuscate' && active !== 'deobfuscate'
+	$textPanel.hidden = active !== 'obfuscate' && active !== 'revert'
 	$wordListPanel.hidden = active !== 'word-list'
 	$instructionsPanel.hidden = active !== 'instructions'
 
