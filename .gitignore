@@ -1,4 +1,7 @@
 .env
 _.txt
 TODO.md
-web/index.mjs
+web/*.html
+web/*.css
+web/*.js
+web/*.mjs

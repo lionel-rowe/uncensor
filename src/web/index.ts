@@ -12,8 +12,8 @@ import { StatelessRegExp } from '../utils.ts'
 import defaultWordsJson from '../../data/defaultWords.json' with { type: 'json' }
 import { decode } from '../encoding.ts'
 
-const DEFAULT_HASH = 'obfuscate'
-const VALID_HASHES = [DEFAULT_HASH, 'deobfuscate', 'word-list'] as const
+const DEFAULT_HASH = 'instructions' as const
+const VALID_HASHES = [DEFAULT_HASH, 'obfuscate', 'deobfuscate', 'word-list'] as const
 const validHashes = new Set<string>(VALID_HASHES)
 const wordPartRe = new StatelessRegExp(/[^\p{P}\p{Z}\n]+/u)
 
@@ -125,7 +125,13 @@ function getInitialText(): string {
 
 function getSelectedMode(): Mode | undefined {
 	const hash = getActiveHash()
-	return hash === 'word-list' ? undefined : hash
+	switch (hash) {
+		case 'obfuscate':
+		case 'deobfuscate':
+			return hash
+		default:
+			return undefined
+	}
 }
 
 function createObfuscator() {
@@ -267,11 +273,12 @@ function applyHash() {
 		$tab.setAttribute('aria-selected', String(isActive))
 	}
 
+	const $instructionsPanel = getElementById('panel-instructions')
 	const $textPanel = getElementById('panel-obfuscate')
 	const $wordListPanel = getElementById('panel-word-list')
-	const isWordListActive = active === 'word-list'
-	$textPanel.hidden = isWordListActive
-	$wordListPanel.hidden = !isWordListActive
+	$textPanel.hidden = active !== 'obfuscate' && active !== 'deobfuscate'
+	$wordListPanel.hidden = active !== 'word-list'
+	$instructionsPanel.hidden = active !== 'instructions'
 
 	reapplyTransformation()
 }

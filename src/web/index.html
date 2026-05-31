@@ -10,12 +10,23 @@
 		<div class="app">
 			<h1>Uncensor</h1>
 			<nav class="tabs" role="tablist">
-				<a class="tab" href="#" role="tab" id="tab-obfuscate">Obfuscate</a>
+				<a class="tab" href="#" role="tab" id="tab-instructions">Instructions</a>
+				<a class="tab" href="#obfuscate" role="tab" id="tab-obfuscate">Obfuscate</a>
 				<a class="tab" href="#deobfuscate" role="tab" id="tab-deobfuscate">Deobfuscate</a>
 				<a class="tab" href="#word-list" role="tab" id="tab-word-list">Word List</a>
 			</nav>
 
 			<main class="card">
+				<section
+					id="panel-instructions"
+					class="panel"
+					role="tabpanel"
+					aria-labelledby="tab-instructions"
+					hidden
+				>
+					<!-- INSTRUCTIONS -->
+				</section>
+
 				<section id="panel-obfuscate" class="panel" role="tabpanel" aria-labelledby="tab-obfuscate" hidden>
 					<div>
 						<div id="label-text-input" class="field-label">Text</div>
