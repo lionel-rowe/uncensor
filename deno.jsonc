@@ -5,7 +5,7 @@
 		"test": "deno test -R",
 		"start": "deno run -R --allow-run ./src/cli.ts",
 		"build": "deno run -R ./scripts/build.ts",
-		"web": "deno run -A --watch=src ./scripts/devServer.ts"
+		"web": "deno run -A --watch=src ./src/server.ts"
 	},
 	"imports": {
 		"@cliffy/command": "jsr:@cliffy/command@1.0.0-rc.7",

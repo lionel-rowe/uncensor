@@ -3,7 +3,7 @@ import { serveDir } from '@std/http/file-server'
 import { exists } from '@std/fs'
 import { CSS, render } from '@deno/gfm'
 
-const IS_DEV_MODE = !Deno.env.get('DENO_DEPLOY')
+const IS_DEV_MODE = !!Deno.env.get('DENO_DEPLOY')
 console.info(`Running in ${IS_DEV_MODE ? 'DEV' : 'PROD'} mode`)
 
 const pathMap: Partial<Record<string, (outfile: string) => Promise<void> | void>> = {
@@ -45,7 +45,6 @@ const pathMap: Partial<Record<string, (outfile: string) => Promise<void> | void>
 }
 
 Deno.serve({
-	port: 9999,
 	async handler(req) {
 		const staticResult = await serveDir(req, { fsRoot: 'static', urlRoot: '' })
 		if (staticResult.ok) return staticResult
@@ -55,10 +54,11 @@ Deno.serve({
 
 		if (Object.hasOwn(pathMap, path)) {
 			const buildFn = pathMap[path]!
-			const outPath = join('web', `.${path}`)
+			const outPath = join('web', `.${path === '/' ? '/index.html' : path}`)
 			if (IS_DEV_MODE || !(await exists(outPath))) {
 				console.info(`Building ${path}...`)
 				await buildFn(outPath)
+				console.log({ outPath, e: await exists(outPath) })
 			}
 		}
 
