@@ -11,6 +11,7 @@ import { getRandomValuesSeeded, nextFloat64 } from '@std/random'
 import { StatelessRegExp } from '../utils.ts'
 import defaultWordsJson from '../../data/defaultWords.json' with { type: 'json' }
 import { decode } from '../encoding.ts'
+import { execCommand } from './execCommand.ts'
 
 const DEFAULT_HASH = 'instructions' as const
 const VALID_HASHES = [DEFAULT_HASH, 'obfuscate', 'revert', 'word-list'] as const
@@ -54,6 +55,7 @@ const transformedWordHighlights = StateField.define<DecorationSet>({
 const $wordListInput = getElementById('words', HTMLTextAreaElement)
 const $includeDefaultWordsInput = getElementById('include-default-words', HTMLInputElement)
 const $textEditorHost = getElementById('text-input', HTMLDivElement)
+const $copyTextInputButton = getElementById('copy-text-input', HTMLButtonElement)
 const defaultWords = defaultWordsJson.words.filter((x) => x != null).map(decode)
 
 $wordListInput.value = ls.get('word-list') ?? ''
@@ -122,6 +124,8 @@ $includeDefaultWordsInput.addEventListener('change', () => {
 	ls.set('include-default-word-list', $includeDefaultWordsInput.checked ? '1' : '0')
 	reapplyTransformation()
 })
+
+$copyTextInputButton.addEventListener('click', copyEditorTextToClipboard)
 
 function getInitialText(): string {
 	const storedText = ls.get('text-input')
@@ -257,6 +261,27 @@ function diffsToChanges(diffs: Diff[]): ChangeSpec[] {
 	}
 
 	return changes
+}
+
+function copyEditorTextToClipboard(this: HTMLButtonElement) {
+	const text = textEditor.state.doc.toString()
+	const prevCaption = this.textContent
+
+	const $scratch = document.createElement('textarea')
+	$scratch.value = text
+	$scratch.style.position = 'fixed'
+	$scratch.style.inset = '0'
+	$scratch.style.opacity = '0'
+	document.body.append($scratch)
+	$scratch.focus()
+	$scratch.select()
+	execCommand('copy')
+	$scratch.remove()
+	this.textContent = 'Copied!'
+
+	setTimeout(() => {
+		this.textContent = prevCaption
+	}, 3000)
 }
 
 function getActiveHash() {

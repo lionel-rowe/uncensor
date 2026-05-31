@@ -164,6 +164,33 @@ label {
 	cursor: default;
 }
 
+.field-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	margin-bottom: 0.35rem;
+}
+
+.field-header .field-label {
+	margin-bottom: 0;
+}
+
+#copy-text-input {
+	font-size: 0.9rem;
+	font-size: 0.9rem;
+	background: #0ccf82;
+	color: white;
+	font-weight: bold;
+	padding: 3px 6px;
+	border: none;
+	border-radius: 4px;
+}
+
+#copy-text-input:hover {
+	background: #0bb06f;
+}
+
 textarea {
 	width: 100%;
 	min-height: 9rem;
