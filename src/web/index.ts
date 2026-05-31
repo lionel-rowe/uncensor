@@ -55,7 +55,7 @@ const $includeDefaultWordsInput = getElementById('include-default-words', HTMLIn
 const $textEditorHost = getElementById('text-input', HTMLDivElement)
 const defaultWords = defaultWordsJson.words.filter((x) => x != null).map(decode)
 
-$wordListInput.value = ls.get('uncensor:word-list') ?? ''
+$wordListInput.value = ls.get('word-list') ?? ''
 $includeDefaultWordsInput.checked = getIncludeDefaultWordList()
 
 const $labelTextInput = getElementById('label-text-input', HTMLDivElement)
@@ -109,17 +109,17 @@ refreshTransformedWordHighlights(next, obfuscator, mode)
 let isUpdating = false
 
 $wordListInput.addEventListener('input', () => {
-	ls.set('uncensor:word-list', $wordListInput.value)
+	ls.set('word-list', $wordListInput.value)
 	reapplyTransformation()
 })
 
 $includeDefaultWordsInput.addEventListener('change', () => {
-	ls.set('uncensor:include-default-word-list', $includeDefaultWordsInput.checked ? '1' : '0')
+	ls.set('include-default-word-list', $includeDefaultWordsInput.checked ? '1' : '0')
 	reapplyTransformation()
 })
 
 function getInitialText(): string {
-	const storedText = ls.get('uncensor:text-input')
+	const storedText = ls.get('text-input')
 	return storedText ?? ''
 }
 
@@ -141,7 +141,7 @@ function createObfuscator() {
 }
 
 function getIncludeDefaultWordList(): boolean {
-	const stored = ls.get('uncensor:include-default-word-list')
+	const stored = ls.get('include-default-word-list')
 	if (stored == null) return true
 	return stored === '1'
 }
@@ -168,7 +168,7 @@ function reapplyTransformation() {
 
 	refreshTransformedWordHighlights(next, obfuscator, mode)
 
-	ls.set('uncensor:text-input', plain)
+	ls.set('text-input', plain)
 }
 
 function refreshTransformedWordHighlights(transformedText: string, obfuscator: Obfuscator, mode = getSelectedMode()) {
@@ -279,6 +279,15 @@ function applyHash() {
 	$textPanel.hidden = active !== 'obfuscate' && active !== 'deobfuscate'
 	$wordListPanel.hidden = active !== 'word-list'
 	$instructionsPanel.hidden = active !== 'instructions'
+
+	if (active === 'instructions') {
+		ls.set('has-viewed-instructions', 'true')
+	} else if (!ls.get('has-viewed-instructions')) {
+		const url = new URL(location.href)
+		url.hash = ''
+		location.replace(url)
+		return
+	}
 
 	reapplyTransformation()
 }

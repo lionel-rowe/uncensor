@@ -1,13 +1,15 @@
-type LsKeySuffix = 'word-list' | 'text-input' | 'mode' | 'include-default-word-list'
-type LsKey = `uncensor:${LsKeySuffix}`
+type LsKey = 'word-list' | 'text-input' | 'mode' | 'include-default-word-list' | 'has-viewed-instructions'
+
+const PREFIX = 'uncensor::'
+
 export const ls = {
 	get(key: LsKey) {
-		return localStorage.getItem(key) ?? null
+		return localStorage.getItem(PREFIX + key) ?? null
 	},
 	set(key: LsKey, value: string) {
-		localStorage.setItem(key, value)
+		localStorage.setItem(PREFIX + key, value)
 	},
 	remove(key: LsKey) {
-		localStorage.removeItem(key)
+		localStorage.removeItem(PREFIX + key)
 	},
 }
