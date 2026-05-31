@@ -3,7 +3,7 @@
 
 import { Obfuscator } from '../obfuscator.ts'
 import { assert } from '@std/assert/assert'
-import { type ChangeSpec, EditorState, RangeSetBuilder, StateEffect, StateField } from '@codemirror/state'
+import { type ChangeSpec, Compartment, EditorState, RangeSetBuilder, StateEffect, StateField } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView, placeholder } from '@codemirror/view'
 import { type Diff, DIFF_DELETE, DIFF_EQUAL, DIFF_INSERT, diff_match_patch } from '@dmsnell/diff-match-patch'
 import { ls } from './localStorage.ts'
@@ -31,6 +31,7 @@ type HashView = (typeof VALID_HASHES)[number]
 
 const transformedWordMark = Decoration.mark({ class: 'cm-transformed-target-word' })
 const deobfuscatedTargetWordMark = Decoration.mark({ class: 'cm-target-word' })
+const placeholderCompartment = new Compartment()
 const setTransformedWordHighlights = StateEffect.define<DecorationSet>()
 const transformedWordHighlights = StateField.define<DecorationSet>({
 	create() {
@@ -58,6 +59,10 @@ const defaultWords = defaultWordsJson.words.filter((x) => x != null).map(decode)
 $wordListInput.value = ls.get('word-list') ?? ''
 $includeDefaultWordsInput.checked = getIncludeDefaultWordList()
 
+function createPlaceholder(mode: Mode) {
+	return `Type text to ${mode} here...`
+}
+
 const $labelTextInput = getElementById('label-text-input', HTMLDivElement)
 const textEditor = new EditorView({
 	state: EditorState.create({
@@ -65,7 +70,7 @@ const textEditor = new EditorView({
 		extensions: [
 			EditorView.lineWrapping,
 			transformedWordHighlights,
-			placeholder('Type text here...'),
+			placeholderCompartment.of(placeholder(createPlaceholder('obfuscate'))),
 			EditorView.contentAttributes.of({
 				'aria-labelledby': $labelTextInput.id,
 				'aria-multiline': 'true',
@@ -279,6 +284,12 @@ function applyHash() {
 	$textPanel.hidden = active !== 'obfuscate' && active !== 'revert'
 	$wordListPanel.hidden = active !== 'word-list'
 	$instructionsPanel.hidden = active !== 'instructions'
+
+	textEditor.dispatch({
+		effects: placeholderCompartment.reconfigure(
+			placeholder(createPlaceholder(active === 'revert' ? 'revert' : 'obfuscate')),
+		),
+	})
 
 	if (active === 'instructions') {
 		ls.set('has-viewed-instructions', 'true')
