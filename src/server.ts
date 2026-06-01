@@ -2,19 +2,18 @@ import { join } from '@std/path'
 import { serveDir } from '@std/http/file-server'
 import { exists } from '@std/fs'
 import { STATUS_CODE } from '@std/http'
-import markedAlert from 'marked-alert'
-import { Marked } from 'marked'
-import { CSS } from '@deno/gfm'
 
 const IS_DEV_MODE = !Deno.env.get('DENO_DEPLOY')
 console.info(`Running in ${IS_DEV_MODE ? 'DEV' : 'PROD'} mode`)
 
 const buildFnsByPath: Partial<Record<string, (outfile: string) => Promise<void> | void>> = {
 	async '/'() {
-		const template = await Deno.readTextFile(join('src', 'web', 'index.html'))
-
+		const { Marked } = await import('marked')
+		const { default: markedAlert } = await import('marked-alert')
 		const marked = new Marked()
 		marked.use(markedAlert())
+
+		const template = await Deno.readTextFile(join('src', 'web', 'index.html'))
 
 		const instructions = `
 			<link rel="stylesheet" href="gfm.css">
@@ -27,6 +26,7 @@ const buildFnsByPath: Partial<Record<string, (outfile: string) => Promise<void> 
 		await Deno.writeTextFile(join('web', 'index.html'), html)
 	},
 	async '/gfm.css'() {
+		const { CSS } = await import('@deno/gfm')
 		await Deno.writeTextFile(join('web', 'gfm.css'), CSS)
 	},
 	async '/index.mjs'(outFile: string) {
