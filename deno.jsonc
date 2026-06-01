@@ -25,7 +25,9 @@
 		"@std/http": "jsr:@std/http@^1.1.1",
 		"@std/path": "jsr:@std/path@^1.1.4",
 		"@std/random": "jsr:@std/random@^0.1.5",
-		"esbuild": "npm:esbuild@^0.28.0"
+		"esbuild": "npm:esbuild@^0.28.0",
+		"marked": "npm:marked@^18.0.4",
+		"marked-alert": "npm:marked-alert@^2.1.2"
 	},
 	"fmt": {
 		"semiColons": false,
