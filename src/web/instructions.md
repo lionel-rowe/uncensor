@@ -15,3 +15,12 @@
 If you need to revert the obfuscation, switch to the [Revert](#revert) tab.
 
 You can also customise the target word list in the [Word List](#word-list) tab.
+
+---
+
+<small>
+
+Code: <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a>.
+Icon: <a href="https://www.flaticon.com/free-icon/eye-mask_11314236" target="_blank" rel="noopener noreferrer">© mnauliady</a>.
+
+</small>

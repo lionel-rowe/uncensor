@@ -55,13 +55,13 @@ Deno.serve({
 		if (staticResult.status !== STATUS_CODE.NotFound) return staticResult
 
 		const url = new URL(req.url)
-		const path = url.pathname
+		const { pathname } = url
 
-		if (Object.hasOwn(buildFnsByPath, path)) {
-			const buildFn = buildFnsByPath[path]!
-			const outPath = join('web', `.${path === '/' ? '/index.html' : path}`)
+		if (Object.hasOwn(buildFnsByPath, pathname)) {
+			const buildFn = buildFnsByPath[pathname]!
+			const outPath = join('web', `.${pathname === '/' ? '/index.html' : pathname}`)
 			if (IS_DEV_MODE || !(await exists(outPath))) {
-				console.info(`Building ${path}...`)
+				console.info(`Building ${pathname}...`)
 				await buildFn(outPath)
 			}
 		}
