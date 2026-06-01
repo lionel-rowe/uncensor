@@ -121,7 +121,7 @@ $wordListInput.addEventListener('input', () => {
 })
 
 $includeDefaultWordsInput.addEventListener('change', () => {
-	ls.set('include-default-word-list', $includeDefaultWordsInput.checked ? '1' : '0')
+	ls.set('include-default-word-list', String($includeDefaultWordsInput.checked))
 	reapplyTransformation()
 })
 
@@ -151,8 +151,7 @@ function createObfuscator() {
 
 function getIncludeDefaultWordList(): boolean {
 	const stored = ls.get('include-default-word-list')
-	if (stored == null) return true
-	return stored === '1'
+	return stored == null || stored === String(true)
 }
 
 function transformText(text: string, obfuscator: Obfuscator, mode: Mode): string {
@@ -310,18 +309,15 @@ function applyHash() {
 	$wordListPanel.hidden = active !== 'word-list'
 	$instructionsPanel.hidden = active !== 'instructions'
 
-	textEditor.dispatch({
-		effects: placeholderCompartment.reconfigure(
-			placeholder(createPlaceholder(active === 'revert' ? 'revert' : 'obfuscate')),
-		),
-	})
+	const mode = active === 'revert' ? 'revert' : 'obfuscate'
+	const effects = placeholderCompartment.reconfigure(placeholder(createPlaceholder(mode)))
+	textEditor.dispatch({ effects })
+	$labelTextInput.textContent = `Text to ${mode}`
 
 	if (active === 'instructions') {
-		ls.set('has-viewed-instructions', 'true')
+		ls.set('has-viewed-instructions', String(true))
 	} else if (!ls.get('has-viewed-instructions')) {
-		const url = new URL(location.href)
-		url.hash = ''
-		location.replace(url)
+		location.hash = ''
 		return
 	}
 
