@@ -13,16 +13,19 @@ const buildFnsByPath: Partial<Record<string, (outfile: string) => Promise<void> 
 		const marked = new Marked()
 		marked.use(markedAlert())
 
-		const template = await Deno.readTextFile(join('src', 'web', 'index.html'))
+		const [template, instructions] = await Promise.all([
+			Deno.readTextFile(join('src', 'web', 'index.html')),
+			Deno.readTextFile(join('src', 'web', 'instructions.md')).then((x) => marked.parse(x)),
+		])
 
-		const instructions = `
+		const replacement = `
 			<link rel="stylesheet" href="gfm.css">
 			<div data-color-mode="light" data-light-theme="light" data-dark-theme="dark" class="markdown-body">
-				${marked.parse(await Deno.readTextFile(join('src', 'web', 'instructions.md')))}
+				${instructions}
 			</div>
 		`
 
-		const html = template.replace(/<!--\s*INSTRUCTIONS\s*-->/, instructions)
+		const html = template.replace(/<!--\s*INSTRUCTIONS\s*-->/, replacement)
 		await Deno.writeTextFile(join('web', 'index.html'), html)
 	},
 	async '/gfm.css'() {
