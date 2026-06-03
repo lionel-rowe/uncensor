@@ -2,6 +2,7 @@ import { join } from '@std/path'
 import { serveDir } from '@std/http/file-server'
 import { exists } from '@std/fs'
 import { STATUS_CODE } from '@std/http'
+import { watchWords } from './syncWords.ts'
 
 const IS_DEV_MODE = !Deno.env.get('DENO_DEPLOY')
 console.info(`Running in ${IS_DEV_MODE ? 'DEV' : 'PROD'} mode`)
@@ -69,3 +70,7 @@ Deno.serve({
 		return await serveDir(req, { fsRoot: 'web', urlRoot: '' })
 	},
 })
+
+if (IS_DEV_MODE) {
+	await watchWords()
+}

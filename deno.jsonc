@@ -37,7 +37,8 @@
 		"singleQuote": true,
 		"proseWrap": "preserve",
 		"exclude": [
-			"web/index.mjs"
+			"web/index.mjs",
+			"snowball"
 		]
 	},
 	"compilerOptions": { "strict": true },
